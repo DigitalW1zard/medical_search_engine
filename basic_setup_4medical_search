@@ -1,0 +1,123 @@
+# For the purpose of this example, we'll assume you have a dataset in a CSV file with columns: `title`, `abstract`, `content`, and `keywords`. You need to set up a web server to handle search queries and return results. We'll use Flask for the web server and Elasticsearch for the search functionality. Make sure you have the following installed: Python, Flask, Elasticsearch, pandas
+
+bash
+pip install flask elasticsearch pandas
+
+# First, we need to index our data in Elasticsearch. Ensure Elasticsearch is running. You can download and start Elasticsearch from [here](https://www.elastic.co/downloads/elasticsearch). Create a Python script to index your data into Elasticsearch.
+
+python
+import pandas as pd
+from elasticsearch import Elasticsearch
+from elasticsearch.helpers import bulk
+
+# Load your dataset
+df = pd.read_csv('medical_articles.csv')
+
+# Initialize Elasticsearch
+es = Elasticsearch()
+
+# Index settings
+settings = {
+    "settings": {
+        "number_of_shards": 1,
+        "number_of_replicas": 0
+    },
+    "mappings": {
+        "properties": {
+            "title": {"type": "text"},
+            "abstract": {"type": "text"},
+            "content": {"type": "text"},
+            "keywords": {"type": "text"}
+        }
+    }
+}
+
+# Create index
+index_name = 'medical_articles'
+if not es.indices.exists(index=index_name):
+    es.indices.create(index=index_name, body=settings)
+
+# Helper function to generate documents
+def generate_docs(df):
+    for index, row in df.iterrows():
+        yield {
+            "_index": index_name,
+            "_source": {
+                "title": row["title"],
+                "abstract": row["abstract"],
+                "content": row["content"],
+                "keywords": row["keywords"]
+            }
+        }
+
+# Bulk index data
+bulk(es, generate_docs(df))
+print("Data indexed successfully!")
+```
+
+# 5. Creating the Flask App
+Next, create a Flask application to handle search requests.
+
+```python
+from flask import Flask, request, jsonify
+from elasticsearch import Elasticsearch
+
+app = Flask(__name__)
+es = Elasticsearch()
+
+@app.route('/search', methods=['GET'])
+def search():
+    query = request.args.get('q')
+    if not query:
+        return jsonify({'error': 'No query provided'}), 400
+
+    search_body = {
+        "query": {
+            "multi_match": {
+                "query": query,
+                "fields": ["title", "abstract", "content", "keywords"]
+            }
+        }
+    }
+
+    res = es.search(index='medical_articles', body=search_body)
+    return jsonify(res['hits']['hits'])
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+# Run the Flask application. You can now test the search functionality by visiting `http://127.0.0.1:5000/search?q=<your_query>`.
+bash
+python app.py
+
+# Frontend (Optional)
+
+html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Medical Search Engine</title>
+</head>
+<body>
+    <h1>Medical Search Engine</h1>
+    <input type="text" id="query" placeholder="Enter your search query">
+    <button onclick="search()">Search</button>
+    <div id="results"></div>
+
+    <script>
+        async function search() {
+            const query = document.getElementById('query').value;
+            const response = await fetch(`http://127.0.0.1:5000/search?q=${query}`);
+            const data = await response.json();
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            data.forEach(hit => {
+                const div = document.createElement('div');
+                div.innerHTML = `<h3>${hit._source.title}</h3><p>${hit._source.abstract}</p>`;
+                resultsDiv.appendChild(div);
+            });
+        }
+    </script>
+</body>
+</html>
