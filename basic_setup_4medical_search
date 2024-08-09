@@ -1,9 +1,9 @@
-# For the purpose of this example, we'll assume you have a dataset in a CSV file with columns: `title`, `abstract`, `content`, and `keywords`. You need to set up a web server to handle search queries and return results. We'll use Flask for the web server and Elasticsearch for the search functionality. Make sure you have the following installed: Python, Flask, Elasticsearch, pandas
+# For the purpose of this example, we'll assume you have a dataset in a CSV file with columns: `title`, `abstract`, `content`, and `keywords`. You need to set up a web server to handle search queries and return results. 
+# We'll use Flask for the web server and Elasticsearch for the search functionality. Make sure you have the following installed: Python, Flask, Elasticsearch, pandas. First, we need to index our data in Elasticsearch. Ensure Elasticsearch is running. 
+# You can download and start Elasticsearch from [here](https://www.elastic.co/downloads/elasticsearch). Create a Python script to index your data into Elasticsearch.
 
 bash
 pip install flask elasticsearch pandas
-
-# First, we need to index our data in Elasticsearch. Ensure Elasticsearch is running. You can download and start Elasticsearch from [here](https://www.elastic.co/downloads/elasticsearch). Create a Python script to index your data into Elasticsearch.
 
 python
 import pandas as pd
@@ -88,6 +88,7 @@ if __name__ == '__main__':
 
 
 # Run the Flask application. You can now test the search functionality by visiting `http://127.0.0.1:5000/search?q=<your_query>`.
+
 bash
 python app.py
 
